@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promoções - Painel de Controle</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #075e54; margin-bottom: 10px; font-size: 28px; }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .card h2 { 
+            color: #128c7e; 
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #25d366;
+            padding-bottom: 10px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .form-group { margin-bottom: 15px; }
+        .form-group.full { grid-column: 1 / -1; }
+        
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            color: #555; 
+            font-weight: 500;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #25d366;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-success { background: #25d366; color: white; }
+        .btn-success:hover { background: #1fb855; transform: translateY(-1px); }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-warning:hover { background: #e0a800; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-info { background: #17a2b8; color: white; }
+        .btn-info:hover { background: #138496; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th {
+            text-align: left;
+            padding: 14px 12px;
+            background: #075e54;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        tr:hover { background: #f8f9fa; }
+        
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-success { background: #d4edda; color: #155724; }
+        .badge-info { background: #d1ecf1; color: #0c5460; }
+        
+        .link-curto {
+            color: #128c7e;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .link-curto:hover { background: #e0e0e0; }
+        
+        .acoes { display: flex; gap: 8px; }
+        
+        #resultado {
+            margin-top: 20px;
+            padding: 15px;
+            background: #d4edda;
+            border-radius: 8px;
+            display: none;
+            border-left: 4px solid #25d366;
+        }
+        
+        .status-bar {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+        .toast-success { background: #28a745; }
+        .toast-error { background: #dc3545; }
+        .toast-info { background: #17a2b8; }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📢 Sistema de Promoções</h1>
+        
+        <!-- Status do Bot -->
+        <div class="status-bar">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="status-bot-indicador" style="width: 12px; height: 12px; border-radius: 50%; display: inline-block; background: #ccc;"></span>
+                <span id="status-bot-texto" style="font-size: 14px; color: #666;">Verificando bot...</span>
+            </div>
+            <button class="btn btn-info btn-sm" onclick="verificarStatusBot()">
+                🔄 Verificar Conexão
+            </button>
+        </div>
+        
+        <!-- FORMULÁRIO DE CRIAÇÃO/EDIÇÃO -->
+        <div class="card" id="form-card">
+            <h2 id="form-title">➕ Criar Nova Promoção</h2>
+            <input type="hidden" id="edit-id" value="">
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nome do Produto *</label>
+                    <input type="text" id="produto" placeholder="Ex: Filtro de Linha DPS Clamper">
+                </div>
+                <div class="form-group">
+                    <label>Preço (apenas números)</label>
+                    <input type="text" id="preco" placeholder="Ex: 67.90" 
+                           oninput="formatarPreco(this)" 
+                           onkeypress="return apenasNumeros(event)" 
+                           maxlength="10">
+                    <small style="color: #666; font-size: 12px;">Use ponto para centavos (ex: 67.90)</small>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group full">
+                    <label>Link do Produto (Shopee/Amazon/etc) *</label>
+                    <input type="url" id="url_original" placeholder="https://s.shopee.com.br/...">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group full">
+                    <label>Link dos Cupons</label>
+                    <input type="url" id="cupom" placeholder="https://s.shopee.com.br/...">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Grupo (Segmento)</label>
+                    <select id="grupo">
+                        <option value="">Selecione...</option>
+                        <option value="Eletronicos">Eletrônicos</option>
+                        <option value="Casa">Casa e Decoração</option>
+                        <option value="Moda">Moda e Acessórios</option>
+                        <option value="Cursos">Cursos e Educação</option>
+                        <option value="Beleza">Beleza e Cuidados</option>
+                        <option value="Esportes">Esportes e Lazer</option>
+                        <option value="Outros">Outros</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-success" onclick="criarLink()">
+                    🔗 Criar Link
+                </button>
+                <button class="btn btn-warning" id="btn-cancelar" style="display: none;" onclick="cancelarEdicao()">
+                    ❌ Cancelar Edição
+                </button>
+            </div>
+            
+            <div id="resultado"></div>
+        </div>
+
+        <!-- TABELA DE LINKS -->
+        <div class="card">
+            <h2>📊 Links Criados e Estatísticas</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <span style="color: #666; font-size: 14px;">
+                    Total de links: <strong id="total-links">0</strong>
+                </span>
+                <button class="btn btn-success btn-sm" onclick="carregarLinks()">
+                    🔄 Atualizar
+                </button>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Preço</th>
+                            <th>Grupo</th>
+                            <th>Link Curto</th>
+                            <th>Cliques</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-links">
+                        <tr><td colspan="6" style="text-align:center; color:#999; padding: 30px;">
+                            🔄 Carregando links...
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // ============================================
+        // FUNÇÕES DE TOAST E FORMATAÇÃO
+        // ============================================
+
+        function showToast(mensagem, tipo = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${tipo}`;
+            toast.textContent = mensagem;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        function apenasNumeros(event) {
+            const char = String.fromCharCode(event.keyCode);
+            if (!/[0-9.]/.test(char)) {
+                event.preventDefault();
+                return false;
+            }
+            
+            const campo = event.target;
+            if (char === '.' && campo.value.includes('.')) {
+                event.preventDefault();
+                return false;
+            }
+            
+            return true;
+        }
+
+        function formatarPreco(campo) {
+            let valor = campo.value.replace(/[^0-9.]/g, '');
+            
+            const partes = valor.split('.');
+            if (partes.length > 2) {
+                valor = partes[0] + '.' + partes.slice(1).join('');
+            }
+            
+            if (partes.length === 2 && partes[1].length > 2) {
+                valor = partes[0] + '.' + partes[1].substring(0, 2);
+            }
+            
+            campo.value = valor;
+        }
+
+        // ============================================
+        // STATUS DO BOT
+        // ============================================
+
+        async function verificarStatusBot() {
+            try {
+                const response = await fetch('/api/bot/status');
+                const status = await response.json();
+                
+                const indicador = document.getElementById('status-bot-indicador');
+                const texto = document.getElementById('status-bot-texto');
+                
+                if (status.conectado) {
+                    indicador.style.background = '#25d366';
+                    texto.textContent = 'Bot online ✓';
+                    texto.style.color = '#25d366';
+                } else {
+                    indicador.style.background = '#dc3545';
+                    texto.textContent = 'Bot offline - Escaneie o QR Code no terminal';
+                    texto.style.color = '#dc3545';
+                }
+            } catch (erro) {
+                console.error('Erro ao verificar status:', erro);
+            }
+        }
+
+        // ============================================
+        // CRUD DE LINKS
+        // ============================================
+
+        async function criarLink() {
+            const produto = document.getElementById('produto').value;
+            const url_original = document.getElementById('url_original').value;
+            const preco = document.getElementById('preco').value;
+            const editId = document.getElementById('edit-id').value;
+
+            if (!produto || !url_original) {
+                showToast('❌ Preencha pelo menos o nome do produto e o link!', 'error');
+                return;
+            }
+
+            if (preco && !/^\d+(\.\d{1,2})?$/.test(preco)) {
+                showToast('❌ Formato de preço inválido! Use apenas números (ex: 67.90)', 'error');
+                return;
+            }
+
+            const dados = {
+                produto: produto,
+                preco: preco,
+                url_original: url_original,
+                cupom: document.getElementById('cupom').value,
+                grupo: document.getElementById('grupo').value
+            };
+
+            try {
+                const url = editId ? `/api/editar/${editId}` : '/api/criar';
+                const method = editId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dados)
+                });
+
+                const resultado = await response.json();
+                
+                if (resultado.sucesso) {
+                    document.getElementById('resultado').style.display = 'block';
+                    document.getElementById('resultado').innerHTML = 
+                        `<strong>✅ ${editId ? 'Link atualizado' : 'Link criado'} com sucesso!</strong><br>
+                         📎 <a href="${resultado.link_curto}" target="_blank">${resultado.link_curto}</a>
+                         <br><small>Copie este link para usar no WhatsApp</small>`;
+                    
+                    showToast(`✅ Link ${editId ? 'atualizado' : 'criado'} com sucesso!`);
+                    cancelarEdicao();
+                    carregarLinks();
+                    limparFormulario();
+                } else {
+                    showToast('❌ Erro ao salvar link', 'error');
+                }
+            } catch (erro) {
+                showToast('❌ Erro de conexão com o servidor', 'error');
+                console.error(erro);
+            }
+        }
+
+        async function editarLink(id) {
+            try {
+                const response = await fetch('/api/links');
+                const links = await response.json();
+                const link = links.find(l => l.id === id);
+                
+                if (link) {
+                    document.getElementById('edit-id').value = id;
+                    document.getElementById('produto').value = link.produto;
+                    
+                    let precoNumerico = '';
+                    if (link.preco) {
+                        precoNumerico = link.preco
+                            .replace('R$ ', '')
+                            .replace(/\./g, '')
+                            .replace(',', '.');
+                    }
+                    document.getElementById('preco').value = precoNumerico;
+                    
+                    document.getElementById('url_original').value = link.url_original;
+                    document.getElementById('cupom').value = link.cupom;
+                    document.getElementById('grupo').value = link.grupo;
+                    
+                    document.getElementById('form-title').textContent = '✏️ Editar Promoção';
+                    document.getElementById('btn-cancelar').style.display = 'inline-flex';
+                    
+                    document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
+                    
+                    showToast('📝 Editando: ' + link.produto);
+                }
+            } catch (erro) {
+                showToast('❌ Erro ao carregar dados do link', 'error');
+                console.error(erro);
+            }
+        }
+
+        async function excluirLink(id, produto) {
+            if (!confirm(`Tem certeza que deseja excluir "${produto}"?\n\nEsta ação também excluirá todos os cliques registrados e não pode ser desfeita!`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/excluir/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const resultado = await response.json();
+                
+                if (resultado.sucesso) {
+                    showToast('🗑️ Link excluído com sucesso!');
+                    carregarLinks();
+                } else {
+                    showToast('❌ Erro ao excluir link', 'error');
+                }
+            } catch (erro) {
+                showToast('❌ Erro de conexão com o servidor', 'error');
+                console.error(erro);
+            }
+        }
+
+        function cancelarEdicao() {
+            document.getElementById('edit-id').value = '';
+            document.getElementById('form-title').textContent = '➕ Criar Nova Promoção';
+            document.getElementById('btn-cancelar').style.display = 'none';
+            limparFormulario();
+        }
+
+        function limparFormulario() {
+            document.getElementById('produto').value = '';
+            document.getElementById('preco').value = '';
+            document.getElementById('url_original').value = '';
+            document.getElementById('cupom').value = '';
+            document.getElementById('grupo').value = '';
+        }
+
+        function copiarLink(id) {
+            const linkCurto = `${window.location.origin}/${id}`;
+            navigator.clipboard.writeText(linkCurto).then(() => {
+                showToast('📋 Link copiado para a área de transferência!');
+            }).catch(() => {
+                showToast('❌ Erro ao copiar link', 'error');
+            });
+        }
+
+        // ============================================
+        // WHATSAPP
+        // ============================================
+
+        async function publicarNoWhatsApp(id, produto) {
+            if (!confirm(`Publicar "${produto}" no grupo do WhatsApp agora?`)) {
+                return;
+            }
+
+            try {
+                const statusResponse = await fetch('/api/bot/status');
+                const status = await statusResponse.json();
+                
+                if (!status.conectado) {
+                    showToast('❌ Bot desconectado! Escaneie o QR Code no terminal primeiro.', 'error');
+                    return;
+                }
+            } catch (erro) {
+                showToast('❌ Erro ao verificar status do bot', 'error');
+                return;
+            }
+
+            try {
+                showToast('📤 Publicando no WhatsApp...', 'info');
+                
+                const response = await fetch(`/api/publicar/${id}`, {
+                    method: 'POST'
+                });
+                
+                const resultado = await response.json();
+                
+                if (resultado.sucesso) {
+                    showToast(`✅ Publicado no grupo "${resultado.grupo}"!`);
+                } else {
+                    showToast('❌ Erro ao publicar: ' + resultado.erro, 'error');
+                }
+            } catch (erro) {
+                showToast('❌ Erro de conexão. Verifique o terminal.', 'error');
+                console.error(erro);
+            }
+        }
+
+        // ============================================
+        // CARREGAR LINKS
+        // ============================================
+
+        async function carregarLinks() {
+            try {
+                const response = await fetch('/api/links');
+                const links = await response.json();
+                
+                const tbody = document.getElementById('tabela-links');
+                document.getElementById('total-links').textContent = links.length;
+                
+                if (links.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999; padding: 30px;">📭 Nenhum link criado ainda</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = links.map(link => `
+                    <tr>
+                        <td>
+                            <strong>${link.produto || 'Sem nome'}</strong>
+                            ${link.cupom ? '<br><small style="color:#666;">🎟️ Com cupom</small>' : ''}
+                        </td>
+                        <td><span class="badge badge-success">${link.preco || '-'}</span></td>
+                        <td><span class="badge badge-info">${link.grupo || 'Geral'}</span></td>
+                        <td>
+                            <span class="link-curto" onclick="copiarLink('${link.id}')" title="Clique para copiar">
+                                /${link.id} 📋
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge badge-success">
+                                👆 ${link.cliques || 0} cliques
+                            </span>
+                        </td>
+                        <td>
+                            <div class="acoes">
+                                <button class="btn btn-success btn-sm" onclick="publicarNoWhatsApp('${link.id}', '${link.produto.replace(/'/g, "\\'")}')" title="Publicar no WhatsApp">
+                                    📤
+                                </button>
+                                <button class="btn btn-warning btn-sm" onclick="editarLink('${link.id}')" title="Editar">
+                                    ✏️
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="excluirLink('${link.id}', '${link.produto.replace(/'/g, "\\'")}')" title="Excluir">
+                                    🗑️
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (erro) {
+                console.error('Erro ao carregar links:', erro);
+                showToast('❌ Erro ao carregar lista de links', 'error');
+            }
+        }
+
+        // ============================================
+        // INICIALIZAÇÃO
+        // ============================================
+
+        carregarLinks();
+        verificarStatusBot();
+        
+        setInterval(carregarLinks, 30000);
+        setInterval(verificarStatusBot, 30000);
+    </script>
+</body>
+</html>
